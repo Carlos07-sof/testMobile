@@ -1,0 +1,143 @@
+GUARDAR ARCHIVOS EN EL DISPOSITIVO
+
+fun saveFile(context: Context, uri: Uri, fileName: String) {
+    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+    val file = File(storageDir, fileName)
+
+    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+        FileOutputStream(file).use { outputStream ->
+            inputStream.copyTo(outputStream)
+        }
+    }
+}
+
+OBTENER LOS ARCHIVOS GUARDADOS
+fun getSavedFiles(context: Context): List<File> {
+    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+    return storageDir?.listFiles()?.filter { it.extension == "pdf" || it.extension == "jpg" || it.extension == "png" } ?: emptyList()
+}
+
+MOSTRAR IMÁGENES EN COMPOSE
+@Composable
+fun ShowSavedImages(context: Context) {
+    val files = remember { getSavedFiles(context) }
+
+    LazyColumn {
+        items(files) { file ->
+            if (file.extension == "jpg" || file.extension == "png") {
+                AsyncImage(
+                    model = file,
+                    contentDescription = "Imagen guardada",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(8.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+    }
+}
+ implementation("io.coil-kt:coil-compose:2.4.0")
+
+ABRIR DOCUMENTOS PDF
+fun openPdf(context: Context, file: File) {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/pdf")
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    }
+
+    context.startActivity(intent)
+}
+
+
+MOSTRAR ARCHIVOS (IMÁGENES Y PDFs)
+@Composable
+fun ShowSavedDocuments(context: Context) {
+    val files = remember { getSavedFiles(context) }
+
+    LazyColumn {
+        items(files) { file ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .clickable {
+                        if (file.extension == "pdf") openPdf(context, file)
+                    },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (file.extension == "pdf") Icons.Default.PictureAsPdf else Icons.Default.Image,
+                    contentDescription = "Archivo guardado",
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = file.name, fontSize = 16.sp)
+            }
+        }
+    }
+}
+
+
+INTEGRAR TODO EN SetupNavigation.kt
+
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
+@Composable
+fun SetupNavigation(startDestination: String) {
+
+    val navController = rememberNavController()
+    val context = LocalContext.current
+
+    Scaffold(
+        bottomBar = {
+            Column(
+                modifier = Modifier.padding(115.dp, 25.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                var imagenUris by remember {
+                    mutableStateOf<List<Uri>>(emptyList())
+                }
+                val scannerLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartIntentSenderForResult(),
+                    onResult = {
+                        if (it.resultCode == RESULT_OK) {
+                            val result = GmsDocumentScanningResult.fromActivityResultIntent(it.data)
+                            imagenUris = result?.pages?.map { it.imageUri } ?: emptyList()
+
+                            result?.pdf?.let { pdf ->
+                                saveFile(context, pdf.uri, "scan_${System.currentTimeMillis()}.pdf")
+                            }
+                        }
+                    }
+                )
+
+                BottomBar(navController = navController)
+
+                FloatingActionButton(
+                    onClick = {
+                        scanner.getStartScanIntent(context as Activity)
+                            .addOnSuccessListener {
+                                scannerLauncher.launch(IntentSenderRequest.Builder(it).build())
+                            }
+                            .addOnFailureListener {
+                                println("Hubo un error: ${it.message}")
+                            }
+                    },
+                    backgroundColor = MaterialTheme.colors.primary
+                ) {
+                    Icon(Icons.Outlined.ShoppingCart, "Cart")
+                }
+                Spacer(modifier = Modifier.height(26.dp))
+            }
+        }
+    ) {
+        NavigationGraph(
+            navController = navController,
+            startDestination = startDestination
+        )
+    }
+}
+
