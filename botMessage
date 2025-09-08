@@ -1,0 +1,59 @@
+// Servidor
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Windows.Forms;
+
+class TcpServer
+{
+    [STAThread] // Necesario para mostrar MessageBox
+    static void Main()
+    {
+        TcpListener server = new TcpListener(IPAddress.Any, 5000);
+        server.Start();
+        Console.WriteLine("Servidor iniciado. Esperando mensajes...");
+
+        while (true)
+        {
+            TcpClient client = server.AcceptTcpClient();
+            NetworkStream stream = client.GetStream();
+
+            byte[] buffer = new byte[1024];
+            int bytes = stream.Read(buffer, 0, buffer.Length);
+            string mensaje = Encoding.UTF8.GetString(buffer, 0, bytes);
+
+            Console.WriteLine("Mensaje recibido: " + mensaje);
+
+            // Mostrar alerta
+            MessageBox.Show("Mensaje recibido: " + mensaje, "Alerta del Servidor", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            client.Close();
+        }
+    }
+}
+using System;
+using System.Net.Sockets;
+using System.Text;
+
+class TcpClientApp
+{
+    static void Main()
+    {
+        TcpClient client = new TcpClient("192.168.1.10", 5000); // IP del servidor
+        NetworkStream stream = client.GetStream();
+
+        string mensaje = "Hola servidor!";
+        byte[] data = Encoding.UTF8.GetBytes(mensaje);
+        stream.Write(data, 0, data.Length);
+
+        // Leer respuesta
+        byte[] buffer = new byte[1024];
+        int bytes = stream.Read(buffer, 0, buffer.Length);
+        string respuesta = Encoding.UTF8.GetString(buffer, 0, bytes);
+
+        Console.WriteLine("Respuesta del servidor: " + respuesta);
+
+        client.Close();
+    }
+}
