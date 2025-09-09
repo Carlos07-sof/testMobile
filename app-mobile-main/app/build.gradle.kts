@@ -114,6 +114,8 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
 
     val camerax_version = "1.5.0-alpha03"
     // The following line is optional, as the core library is included indirectly by camera-camera2

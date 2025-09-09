@@ -696,11 +696,11 @@ val adList = listOf(
         rutas = "datos_negocios"
     ),
     Advertisement(
-        title = "Archivos",
+        title = "Escaner",
 //        subTitle = "Free delivery for selected restaurants",
-        color = Color(0xFFDBE891),
-        image = R.drawable.rider,
-        rutas = "archivos"
+        color = Color(0xFF91CEE8),
+        image = R.drawable.groceries,
+        rutas = "escaner"
     ),
     Advertisement(
         title = "Order groceries",

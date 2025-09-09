@@ -51,6 +51,7 @@ import com.example.foodike.presentation.home.components.FoodikeBottomNavigation
 import com.example.foodike.presentation.login.LoginScreen
 import com.example.foodike.presentation.negocios.NegociosScreen
 import com.example.foodike.presentation.profile.Profile
+import com.example.foodike.presentation.scanner.BluetoothScreen
 import com.example.foodike.presentation.tasks.Tareas
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
@@ -138,6 +139,12 @@ fun NavigationGraph(
             route = Screen.Negocios.route
         ){
             NegociosScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.Escaner.route
+        ){
+            BluetoothScreen()
         }
 
 
